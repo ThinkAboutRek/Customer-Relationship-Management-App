@@ -1,0 +1,17 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment
+.env
+venv/
+
+# Django DB (if using SQLite)
+*.sqlite3
+
+# Editor folders
+.vscode/
+.idea/
+
+# Pipenv lock file (optional)
+Pipfile.lock
