@@ -32,8 +32,8 @@ def logout_user(request):
 
 
 def register_user(request):
-	if request.method == 'POST':
-		form = SignUpForm(request.POST)
+	form = SignUpForm(request.POST or None)
+	if request.method == "POST": # Optional, .is_valid() is only true when the form has real submitted data!
 		if form.is_valid():
 			form.save()
 			# Authenticate and login
@@ -43,10 +43,6 @@ def register_user(request):
 			login(request, user)
 			messages.success(request, "You Have Successfully Registered! Welcome!")
 			return redirect('home')
-	else:
-		form = SignUpForm()
-		return render(request, 'register.html', {'form':form})
-
 	return render(request, 'register.html', {'form':form})
 
 
@@ -72,19 +68,19 @@ def delete_record(request, pk):
       
 
 def add_record(request):
-	form = AddRecordForm(request.POST or None)
 	if request.user.is_authenticated:
-		if request.method == "POST":
+		form = AddRecordForm(request.POST or None)
+		if request.method == "POST": # Optional, .is_valid() is only true when the form has real submitted data!
 			if form.is_valid():
-				add_record = form.save()
+				form.save()
 				messages.success(request, "Record Added!")
 				return redirect('home')
-		return render(request, 'add_record.html', {'form':form})
+		return render(request, 'add_record.html', {'form': form})
 	else:
-		messages.success(request, "You Must Be Logged In To View This Page!")
+		messages.error(request, "You must be logged in.")
 		return redirect('home')
 	
-
+		
 def update_record(request, pk):
 	if request.user.is_authenticated:
 		current_record = Record.objects.get(id=pk)
