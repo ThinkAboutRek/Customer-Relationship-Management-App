@@ -1,30 +1,32 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from .forms import SignUpForm, AddRecordForm
+from .forms import LoginForm, SignUpForm, AddRecordForm
 from .models import Record
 
 def home(request):
-    records = Record.objects.all()
+    records = Record.objects.all() if request.user.is_authenticated else None
+    return render(request, 'home.html', {'records': records})
 
-    # Check to see if logging in
-    if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
+
+def login_user(request):
+	form = LoginForm(request.POST or None)
+	if request.method == 'POST':
+		username = request.POST['username']
+		password = request.POST['password']
         # Authenticate
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            messages.success(request, "You Have Been Logged In!")
-            return redirect('home')
-        else:
-            messages.success(request, "There Was An Error Logging In, Please Try Again.")
-            return redirect('home')
+		user = authenticate(request, username=username, password=password)
+		if user is not None:
+			login(request, user)
+			messages.success(request, "You Have Been Logged In!")
+			return redirect('home')
+		else:
+			messages.success(request, "There Was An Error Logging In, Please Try Again.")
+			return redirect('login')
+	else:
+		return render(request, 'login.html', {'form': form})
 
-    else:
-        return render(request, 'home.html', {'records': records})
 
-    
 def logout_user(request):
     logout(request)
     messages.success(request, "You have been logged out.")

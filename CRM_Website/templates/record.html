@@ -23,12 +23,12 @@
 
   <div class="d-flex justify-content-between mt-4">
         <div class="d-flex gap-2">
+        <a href="{% url 'home' %}" class="btn btn-secondary">Back</a>
+        </div>
+        <div>
         <a href="{% url 'delete_record' customer_record.id %}" class="btn btn-danger"
         onclick="return confirm('Are you sure you want to delete this record?');">Delete</a>
         <a href="{% url 'update_record' customer_record.id %}" class="btn btn-warning text-white">Update Record</a>
-        </div>
-        <div>
-        <a href="{% url 'home' %}" class="btn btn-secondary">Back</a>
         </div>
   </div>
   
