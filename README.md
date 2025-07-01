@@ -1,46 +1,71 @@
-# Customer Relationship Management App (CRM)
+# Django CRM App
 
-A CRM web application built with **Django**, **MySQL**, **Pipenv**, and **Bootstrap**.  
-It provides user authentication, CRUD operations for customer records, theme toggle, and secure environment handling.
+A lightweight Customer Relationship Management (CRM) web application built with Django 5.2, featuring:
+
+- **User Authentication**  
+  - Custom **login page** (`/login/`) that handles `?next=` redirects  
+  - **Registration** with unique-email validation  
+  - **Logout**  
+  - Already-logged-in users are auto-redirected away from login/register
+
+- **Protected Views**  
+  - `@login_required` on all CRUD & dashboard views  
+  - **Home** (`/`) protected without appending `?next=`  
+  - Automatic redirect to `/login/` when unauthenticated
+
+- **Customer Records CRUD**  
+  - **List** all records (Dashboard)  
+  - **Detail** view (`/record/<pk>/`)  
+  - **Add** record (`/add_record/`) with unique email & phone validation  
+  - **Update** record (`/update_record/<pk>/`)  
+  - **Delete** record (`/delete_record/<pk>/`)
+
+- **Flash Messages**  
+  - Centralized in **base.html**’s fixed alert container  
+  - Styled via Bootstrap 5  
+  - Error flashes use `alert-danger`, success `alert-success`, warning `alert-warning`
+
+- **Form Styling**  
+  - Subclasses of `AuthenticationForm` & `UserCreationForm` for consistent Bootstrap 5 widgets  
+  - Field-level help texts, placeholders, and inline validation
+
+- **Theme Toggle**  
+  - Light / Dark mode switch in navbar (stored in `localStorage`)
 
 ---
 
-## 📁 Project Structure
+## 📂 Project Structure
 
 ```
 CRM App/
-├── D_CRM/                  # Django project configuration
-│   ├── __init__.py
-│   ├── asgi.py
-│   ├── settings.py         # Application settings with dotenv
-│   ├── urls.py             # Root URL configurations
-│   └── wsgi.py
-├── CRM_Website/            # Main CRM application
-│   ├── __init__.py
-│   ├── admin.py            # Model registration for Django admin
-│   ├── apps.py
+├── D_CRM/                   # Django project settings
+│   ├── settings.py         # with LOGIN_URL = 'login'
+│   ├── urls.py             # root URLconf
+│   └── wsgi.py, asgi.py
+├── CRM_Website/             # Main CRM app
+│   ├── admin.py            # Record registration
 │   ├── forms.py            # LoginForm, SignUpForm, AddRecordForm
-│   ├── models.py           # Record model definition
-│   ├── tests.py            # Unit tests
-│   ├── urls.py             # App-level URL configurations
-│   └── views.py            # Views for authentication & CRUD
-├── templates/              # HTML templates
-│   ├── base.html           # Base layout with navbar & messages
-│   ├── navbar.html         # Navigation bar with theme toggle
-│   ├── home.html           # Dashboard page (requires login)
-│   ├── login.html          # Separate login page
-│   ├── register.html       # User registration page
-│   ├── add_record.html     # Form page to add a record
-│   ├── record.html         # Detail view of a single record
-│   └── update_record.html  # Form page to update a record
-├── static/                 # Static files (CSS, JS, images)
-├── manage.py               # Django management script
-├── mydb.py                 # Script to initialize MySQL database
-├── .env                    # Environment variables (ignored by git)
-├── .gitignore              # Ignore env & temporary files
-├── Pipfile                 # Pipenv dependencies
-├── Pipfile.lock
-└── README.md               # Project documentation
+│   ├── models.py           # Record model
+│   ├── tests.py            # (stub for unit tests)
+│   ├── urls.py             # app-level URLconf (with trailing slashes)
+│   └── views.py            # function-based views with @login_required
+├── templates/
+│   ├── base.html           # Global layout & flash messages
+│   ├── navbar.html         # Navbar with theme toggle
+│   ├── home.html           # Dashboard (protected)
+│   ├── login.html          # Login page (no inline message loop)
+│   ├── register.html       # Registration page
+│   ├── add_record.html     # Add-record form
+│   ├── record.html         # Detail view
+│   ├── update_record.html  # Update-record form
+│   └── …
+├── static/                 # CSS, JS, images
+├── manage.py               # Django CLI
+├── mydb.py                 # MySQL initialization script (optional)
+├── .env                    # Environment vars (gitignored)
+├── .gitignore
+├── Pipfile & Pipfile.lock  # Pipenv dependencies
+└── README.md               # ← you're here
 ```
 
 ---
@@ -69,22 +94,26 @@ pipenv install python-dotenv
 
 ## 🔧 Installation & Setup
 
-1. **Clone the repository**  
+1. **Clone & enter**  
    ```bash
    git clone https://github.com/ThinkAboutRek/ThinkAboutRek-Customer-Relationship-Management-App.git
    cd ThinkAboutRek-Customer-Relationship-Management-App
    ```
 
-2. **Install dependencies**  
+2. **Install dependencies & activate environment**  
    ```bash
-   pip install pipenv
+   pip install pipenv      # if not already installed
    pipenv install
    pipenv shell
    ```
 
-3. **Configure environment**  
+3. **Configure `.env`**  
    Create a `.env` file in the project root:
    ```ini
+   SECRET_KEY=your_secret_key
+   DEBUG=True
+   ALLOWED_HOSTS=127.0.0.1,localhost
+   LOGIN_URL=login
    MYSQL_NAME=CRM_DB
    MYSQL_USER=root
    MYSQL_PASSWORD=yourpassword
@@ -104,47 +133,32 @@ pipenv install python-dotenv
    python manage.py createsuperuser
    ```
 
-6. **Start the development server**  
+6. **Run the development server**  
    ```bash
    python manage.py runserver
    ```
 
----
-
-## 🚀 Features
-
-- **User Authentication**  
-  - **Login** via a dedicated **login page** using `LoginForm`  
-  - **Registration** via `SignUpForm`  
-  - **Logout** functionality
-
-- **Record Management (`Record` model)**  
-  - Fields:  
-    - `first_name`, `last_name`, `email`, `phone`  
-    - `address`, `city`, `county`, `postcode`  
-    - `created_at` (auto timestamp)  
-  - **CRUD operations**: add, view, update, delete records  
-
-- **Theming**  
-  - Light/dark toggle stored in `localStorage` (via `navbar.html`)
-
-- **Django Admin**  
-  - Manage `Record` entries in the Django admin interface  
+7. **Visit** [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
 
 ---
 
-## 📂 URL Endpoints
+## 🚀 Usage
 
-| Path                     | View                  | Description                              |
-|--------------------------|-----------------------|------------------------------------------|
-| `/login/`                | `login_user`          | Login page                               |
-| `/register/`             | `register_user`       | User registration page                   |
-| `/logout/`               | `logout_user`         | Log out current user                     |
-| `/`                      | `home`                | Dashboard (lists records, requires login)|
-| `/record/<int:pk>/`      | `customer_record`     | View record details                      |
-| `/add_record/`           | `add_record`          | Add a new record                         |
-| `/update_record/<int:pk>/` | `update_record`     | Edit an existing record                  |
-| `/delete_record/<int:pk>/` | `delete_record`     | Delete a record (confirmation on home)   |
+1. **Register** at `/register/`  
+2. **Log in** at `/login/` (redirects back to intended page)  
+3. **Dashboard** `/` – list all records  
+4. **View** a record at `/record/<pk>/`  
+5. **Add** at `/add_record/`  
+6. **Edit** at `/update_record/<pk>/`  
+7. **Delete** at `/delete_record/<pk>/`
+
+---
+
+## 🔧 Customizations
+
+* **Unique validations** in `AddRecordForm.clean_email()` & `clean_phone()`  
+* **Custom `login_user`** handles `?next`, blocks auth’d users, and uses `form.get_user()`  
+* **Global flashes** in `base.html` (no duplicates)
 
 ---
 
