@@ -3,7 +3,6 @@ from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 from .models import Record
 
-
 class LoginForm(AuthenticationForm):
     def __init__(self, *args, **kwargs):
         super(LoginForm, self).__init__(*args, **kwargs)
@@ -88,6 +87,20 @@ class SignUpForm(UserCreationForm):
             'Enter the same password as before, for verification.'
             '</small></span>'
         )
+    
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("That email is already registered.")
+        return email
+
+    def save(self, commit=True):
+        user = super(SignUpForm, self).save(commit=False)
+        # save the email field (first_name/last_name are handled by super().save())
+        user.email = self.cleaned_data['email']
+        if commit:
+            user.save()
+        return user
 
 
 class AddRecordForm(forms.ModelForm):
@@ -107,7 +120,7 @@ class AddRecordForm(forms.ModelForm):
             "class": "form-control"
         })
     )
-    email = forms.CharField(
+    email = forms.EmailField(
         required=True,
         label="",
         widget=forms.TextInput(attrs={
@@ -159,3 +172,21 @@ class AddRecordForm(forms.ModelForm):
     class Meta:
         model = Record
         fields = '__all__'
+    
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        qs = Record.objects.filter(email__iexact=email)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError("That email is already in use.")
+        return email
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        qs = Record.objects.filter(phone__iexact=phone)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError("That phone number is already in use.")
+        return phone
