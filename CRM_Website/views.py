@@ -1,97 +1,98 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from .forms import LoginForm, SignUpForm, AddRecordForm
 from .models import Record
 
+@login_required(redirect_field_name=None)
 def home(request):
-    records = Record.objects.all() if request.user.is_authenticated else None
-    return render(request, 'home.html', {'records': records})
+	records = Record.objects.all()
+	return render(request, 'home.html', {'records': records})
 
+def register_user(request):
+    if request.user.is_authenticated:
+        return redirect('home')
+    
+    form = SignUpForm(request.POST or None)
+    if request.method == 'POST':
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, "Registration successful!")
+            return redirect('home')
+        else:
+            messages.error(request, "Please correct the errors below.")
+            
+    return render(request, 'register.html', {'form': form})
 
 def login_user(request):
-	form = LoginForm(request.POST or None)
-	if request.method == 'POST':
-		username = request.POST['username']
-		password = request.POST['password']
-        # Authenticate
-		user = authenticate(request, username=username, password=password)
-		if user is not None:
-			login(request, user)
-			messages.success(request, "You Have Been Logged In!")
-			return redirect('home')
-		else:
-			messages.success(request, "There Was An Error Logging In, Please Try Again.")
-			return redirect('login')
-	else:
-		return render(request, 'login.html', {'form': form})
+    if request.user.is_authenticated:
+        return redirect('home')
+    
+    form = LoginForm(request=request, data=request.POST or None)
+    # 1) If they were redirected here by @login_required, Django appends ?next=…
+    if request.method == 'GET' and 'next' in request.GET:
+        messages.warning(request, "🔒 Please log in to view that page.")
 
+    # 2) Handle form submission
+    if request.method == 'POST':
+        if form.is_valid():
+            user = form.get_user()
+            if user is not None:
+                login(request, user)
+                messages.success(request, "You have been logged in!")
+
+                # 3) Redirect to `next` if present, else home
+                return redirect(request.GET.get('next', 'home'))
+            else:
+                messages.error(request, "Invalid credentials. Please try again.")
+        else:
+            messages.error(request, "Please correct the errors below.")
+
+    return render(request, 'login.html', {'form': form})
 
 def logout_user(request):
     logout(request)
     messages.success(request, "You have been logged out.")
-    return redirect('home')
+    return redirect('login')
 
-
-def register_user(request):
-	form = SignUpForm(request.POST or None)
-	if request.method == "POST": # Optional, .is_valid() is only true when the form has real submitted data!
-		if form.is_valid():
-			form.save()
-			# Authenticate and login
-			username = form.cleaned_data['username']
-			password = form.cleaned_data['password1']
-			user = authenticate(request, username=username, password=password)
-			login(request, user)
-			messages.success(request, "You Have Successfully Registered! Welcome!")
-			return redirect('home')
-	return render(request, 'register.html', {'form':form})
-
-
+@login_required
 def customer_record(request, pk):
-    if request.user.is_authenticated:
-        # Look Up Records
-        customer_record = Record.objects.get(id=pk)
-        return render(request, 'record.html', {'customer_record':customer_record})
-    else:
-        messages.success(request, "You Must Be Logged In To View This Page!")
-        return redirect('home')
+    # Safely 404 if not found
+    record = get_object_or_404(Record, pk=pk)
+    return render(request, 'record.html', {'customer_record': record})
 
-
-def delete_record(request, pk):
-	if request.user.is_authenticated:
-		delete_it = Record.objects.get(id=pk)
-		delete_it.delete()
-		messages.success(request, "Record Deleted Successfully!")
-		return redirect('home')
-	else:
-		messages.success(request, "You Must Be Logged In To View This Page!")
-		return redirect('home')
-      
-
+@login_required
 def add_record(request):
-	if request.user.is_authenticated:
-		form = AddRecordForm(request.POST or None)
-		if request.method == "POST": # Optional, .is_valid() is only true when the form has real submitted data!
-			if form.is_valid():
-				form.save()
-				messages.success(request, "Record Added!")
-				return redirect('home')
-		return render(request, 'add_record.html', {'form': form})
-	else:
-		messages.error(request, "You must be logged in.")
-		return redirect('home')
-	
-		
+    form = AddRecordForm(request.POST or None)
+    if request.method == 'POST':
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Record added!")
+            return redirect('home')
+        else:
+            messages.error(request, "Please correct the errors below.")
+            
+    return render(request, 'add_record.html', {'form': form})
+
+@login_required
 def update_record(request, pk):
-	if request.user.is_authenticated:
-		current_record = Record.objects.get(id=pk)
-		form = AddRecordForm(request.POST or None, instance=current_record)
-		if form.is_valid():
-			form.save()
-			messages.success(request, "Record Has Been Updated!")
-			return redirect('home')
-		return render(request, 'update_record.html', {'form':form})
-	else:
-		messages.success(request, "You Must Be Logged In To View This Page!")
-		return redirect('home')
+    record = get_object_or_404(Record, pk=pk)
+    form = AddRecordForm(request.POST or None, instance=record)
+    if request.method == 'POST':
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Record updated!")
+            return redirect('home')
+        else:
+            messages.error(request, "Please correct the errors below.")
+            
+    return render(request, 'update_record.html', {'form': form})
+
+@login_required
+def delete_record(request, pk):
+    record = get_object_or_404(Record, pk=pk)
+    record.delete()
+    messages.success(request, "Record deleted!")
+    return redirect('home')
