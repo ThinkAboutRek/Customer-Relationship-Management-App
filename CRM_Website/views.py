@@ -22,7 +22,7 @@ def _filter_records(queryset, query):
 @login_required(redirect_field_name=None)
 def home(request):
     query = request.GET.get('q', '').strip()
-    records = _filter_records(Record.objects.all(), query)
+    records = _filter_records(Record.objects.all().order_by('-created_at'), query)
     paginator = Paginator(records, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
