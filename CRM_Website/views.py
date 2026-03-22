@@ -1,6 +1,6 @@
 import csv
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -8,20 +8,21 @@ from django.http import HttpResponse
 from .forms import LoginForm, SignUpForm, AddRecordForm
 from .models import Record
 
+
+def _filter_records(queryset, query):
+    if not query:
+        return queryset
+    return (
+        queryset.filter(first_name__icontains=query)
+        | queryset.filter(last_name__icontains=query)
+        | queryset.filter(email__icontains=query)
+        | queryset.filter(company__icontains=query)
+    )
+
 @login_required(redirect_field_name=None)
 def home(request):
     query = request.GET.get('q', '').strip()
-    records = Record.objects.all()
-    if query:
-        records = records.filter(
-            first_name__icontains=query
-        ) | records.filter(
-            last_name__icontains=query
-        ) | records.filter(
-            email__icontains=query
-        ) | records.filter(
-            company__icontains=query
-        )
+    records = _filter_records(Record.objects.all(), query)
     paginator = Paginator(records, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -110,17 +111,7 @@ def update_record(request, pk):
 @login_required
 def export_records_csv(request):
     query = request.GET.get('q', '').strip()
-    records = Record.objects.all()
-    if query:
-        records = records.filter(
-            first_name__icontains=query
-        ) | records.filter(
-            last_name__icontains=query
-        ) | records.filter(
-            email__icontains=query
-        ) | records.filter(
-            company__icontains=query
-        )
+    records = _filter_records(Record.objects.all(), query)
 
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="records.csv"'

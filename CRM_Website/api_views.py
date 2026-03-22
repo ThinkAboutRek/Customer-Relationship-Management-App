@@ -1,6 +1,7 @@
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from .models import Record
 from .serializers import RecordSerializer
+from .views import _filter_records
 
 
 class RecordListAPIView(ListAPIView):
@@ -9,17 +10,7 @@ class RecordListAPIView(ListAPIView):
     def get_queryset(self):
         queryset = Record.objects.all().order_by('-created_at')
         query = self.request.query_params.get('q', '').strip()
-        if query:
-            queryset = queryset.filter(
-                first_name__icontains=query
-            ) | queryset.filter(
-                last_name__icontains=query
-            ) | queryset.filter(
-                email__icontains=query
-            ) | queryset.filter(
-                company__icontains=query
-            )
-        return queryset
+        return _filter_records(queryset, query)
 
 
 class RecordDetailAPIView(RetrieveAPIView):
