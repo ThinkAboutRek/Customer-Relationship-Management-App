@@ -66,7 +66,7 @@ CRM App/
 │   ├── serializers.py        # RecordSerializer (ModelSerializer)
 │   ├── forms.py              # LoginForm, SignUpForm, AddRecordForm
 │   ├── models.py             # Record model (first/last name, email, phone, company, address, notes)
-│   ├── tests.py              # (stub for unit tests)
+│   ├── tests.py              # 33 unit tests across model, auth, CRUD, validation, search, and export
 │   ├── urls.py               # App-level URLconf (CRUD + export routes)
 │   └── views.py              # Function-based views with @login_required + shared filter helper
 ├── CRM_Website/templates/
@@ -221,6 +221,26 @@ curl http://127.0.0.1:8000/api/records/1/ \
 - **Custom `login_user`** handles `?next=`, blocks already-authenticated users, and uses `form.get_user()`
 - **Global flashes** in `base.html` (no duplicates across templates)
 - **Admin panel** configured with `list_display`, `search_fields`, `list_filter`, and `readonly_fields` on `RecordAdmin`
+
+---
+
+## 🧪 Testing
+
+The test suite uses Django's built-in `TestCase` and runs against an in-memory SQLite database, so no database setup is needed to run tests.
+
+```bash
+python manage.py test CRM_Website
+```
+
+**33 tests** covering:
+
+| Class | Tests | What's covered |
+|-------|-------|----------------|
+| `RecordModelTest` | 2 | `__str__`, field defaults |
+| `AuthViewTest` | 10 | Login, logout, register, `@login_required` redirects, auth'd user guards |
+| `RecordCRUDTest` | 8 | Add, view, update, delete (POST + GET safety), form page loads, 404 |
+| `FormValidationTest` | 4 | Duplicate email/phone on records, duplicate email on register, update with own email |
+| `SearchAndExportTest` | 9 | Search by name/company, empty search, no results, CSV content, filter export, auth guard, header row |
 
 ---
 

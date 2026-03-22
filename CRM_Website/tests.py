@@ -77,6 +77,16 @@ class AuthViewTest(TestCase):
         self.assertRedirects(response, reverse('home'))
         self.assertTrue(User.objects.filter(username='newuser').exists())
 
+    def test_logged_in_user_redirected_from_login(self):
+        self.client.login(username='testuser', password='TestPass123!')
+        response = self.client.get(reverse('login'))
+        self.assertRedirects(response, reverse('home'))
+
+    def test_logged_in_user_redirected_from_register(self):
+        self.client.login(username='testuser', password='TestPass123!')
+        response = self.client.get(reverse('register'))
+        self.assertRedirects(response, reverse('home'))
+
 
 class RecordCRUDTest(TestCase):
 
@@ -136,6 +146,14 @@ class RecordCRUDTest(TestCase):
         response = self.client.get(reverse('record', args=[9999]))
         self.assertEqual(response.status_code, 404)
 
+    def test_add_record_form_page_loads(self):
+        response = self.client.get(reverse('add_record'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_update_record_form_page_loads(self):
+        response = self.client.get(reverse('update_record', args=[self.record.pk]))
+        self.assertEqual(response.status_code, 200)
+
 
 class FormValidationTest(TestCase):
 
@@ -149,6 +167,22 @@ class FormValidationTest(TestCase):
             address='1 Old St', city='Bristol',
             county='Avon', postcode='BS1 1AA'
         )
+
+    def test_update_does_not_reject_own_email(self):
+        record = Record.objects.create(
+            first_name='Update', last_name='Test',
+            email='myemail@example.com', phone='07800000000',
+            address='5 Test Rd', city='London',
+            county='Greater London', postcode='E1 2BB'
+        )
+        response = self.client.post(reverse('update_record', args=[record.pk]), {
+            'first_name': 'Update', 'last_name': 'Test',
+            'email': 'myemail@example.com', 'phone': '07800000000',
+            'company': '', 'address': '5 Test Rd',
+            'city': 'London', 'county': 'Greater London', 'postcode': 'E1 2BB',
+            'notes': '',
+        })
+        self.assertRedirects(response, reverse('home'))
 
     def test_add_record_rejects_duplicate_email(self):
         response = self.client.post(reverse('add_record'), {
@@ -245,3 +279,15 @@ class SearchAndExportTest(TestCase):
         response = self.client.get(reverse('export_records'))
         self.assertEqual(response.status_code, 302)
         self.assertIn('/login/', response['Location'])
+
+    def test_csv_has_correct_header_row(self):
+        response = self.client.get(reverse('export_records'))
+        first_line = response.content.decode('utf-8').splitlines()[0]
+        self.assertIn('Email', first_line)
+        self.assertIn('First Name', first_line)
+        self.assertIn('Company', first_line)
+
+    def test_search_with_no_results_shows_empty_table(self):
+        response = self.client.get(reverse('home') + '?q=zzznomatch')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'No records available.')

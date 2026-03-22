@@ -14,4 +14,4 @@ class Record(models.Model):
     notes = models.TextField(blank=True, default='')
 
     def __str__(self):
-        return (f"{self.first_name} {self.last_name}")
+        return f"{self.first_name} {self.last_name}"
