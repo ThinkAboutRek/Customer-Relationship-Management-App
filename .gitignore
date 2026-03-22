@@ -6,3 +6,4 @@ Pipfile.lock
 venv/
 .idea/
 .vscode/
+*.local.json
