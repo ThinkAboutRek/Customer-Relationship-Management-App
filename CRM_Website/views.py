@@ -92,7 +92,8 @@ def update_record(request, pk):
 
 @login_required
 def delete_record(request, pk):
-    record = get_object_or_404(Record, pk=pk)
-    record.delete()
-    messages.success(request, "Record deleted!")
+    if request.method == 'POST':
+        record = get_object_or_404(Record, pk=pk)
+        record.delete()
+        messages.success(request, "Record deleted!")
     return redirect('home')

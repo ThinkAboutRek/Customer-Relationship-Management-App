@@ -136,6 +136,14 @@ class AddRecordForm(forms.ModelForm):
             "class": "form-control"
         })
     )
+    company = forms.CharField(
+        required=False,
+        label="",
+        widget=forms.TextInput(attrs={
+            "placeholder": "Company (optional)",
+            "class": "form-control"
+        })
+    )
     address = forms.CharField(
         required=True,
         label="",
@@ -166,6 +174,15 @@ class AddRecordForm(forms.ModelForm):
         widget=forms.TextInput(attrs={
             "placeholder": "Postcode",
             "class": "form-control"
+        })
+    )
+    notes = forms.CharField(
+        required=False,
+        label="",
+        widget=forms.Textarea(attrs={
+            "placeholder": "Notes (optional)",
+            "class": "form-control",
+            "rows": 3
         })
     )
 
