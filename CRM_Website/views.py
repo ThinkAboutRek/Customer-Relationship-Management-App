@@ -1,14 +1,31 @@
+import csv
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.http import HttpResponse
 from .forms import LoginForm, SignUpForm, AddRecordForm
 from .models import Record
 
 @login_required(redirect_field_name=None)
 def home(request):
-	records = Record.objects.all()
-	return render(request, 'home.html', {'records': records})
+    query = request.GET.get('q', '').strip()
+    records = Record.objects.all()
+    if query:
+        records = records.filter(
+            first_name__icontains=query
+        ) | records.filter(
+            last_name__icontains=query
+        ) | records.filter(
+            email__icontains=query
+        ) | records.filter(
+            company__icontains=query
+        )
+    paginator = Paginator(records, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'home.html', {'records': page_obj, 'query': query, 'page_obj': page_obj})
 
 def register_user(request):
     if request.user.is_authenticated:
@@ -89,6 +106,30 @@ def update_record(request, pk):
             messages.error(request, "Please correct the errors below.")
             
     return render(request, 'update_record.html', {'form': form})
+
+@login_required
+def export_records_csv(request):
+    query = request.GET.get('q', '').strip()
+    records = Record.objects.all()
+    if query:
+        records = records.filter(
+            first_name__icontains=query
+        ) | records.filter(
+            last_name__icontains=query
+        ) | records.filter(
+            email__icontains=query
+        ) | records.filter(
+            company__icontains=query
+        )
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="records.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Company', 'Address', 'City', 'County', 'Postcode', 'Notes', 'Created At'])
+    for r in records:
+        writer.writerow([r.id, r.first_name, r.last_name, r.email, r.phone, r.company, r.address, r.city, r.county, r.postcode, r.notes, r.created_at.strftime('%Y-%m-%d %H:%M')])
+    return response
+
 
 @login_required
 def delete_record(request, pk):

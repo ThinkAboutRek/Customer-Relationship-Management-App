@@ -1,4 +1,12 @@
 from django.contrib import admin
 from .models import Record
 
-admin.site.register(Record)
+
+@admin.register(Record)
+class RecordAdmin(admin.ModelAdmin):
+    list_display = ('id', 'first_name', 'last_name', 'email', 'phone', 'company', 'city', 'county', 'created_at')
+    list_display_links = ('id', 'first_name', 'last_name')
+    search_fields = ('first_name', 'last_name', 'email', 'company', 'city')
+    list_filter = ('city', 'county', 'created_at')
+    ordering = ('-created_at',)
+    readonly_fields = ('created_at',)
